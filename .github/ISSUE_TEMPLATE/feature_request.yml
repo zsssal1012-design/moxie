@@ -1,0 +1,44 @@
+name: "💡 功能建议"
+description: "提出一个新想法（听写模式、错词本、导出 PDF…）"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        这个项目的定位是「离线、零依赖、单文件、平板友好」。
+        偏离这个定位的建议也能提，但请先说明理由。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 想解决什么问题
+      description: 别急着说方案，先说痛点。例如："孩子写完没人批改，我得一个个对答案"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: 你希望的解决方式
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 影响范围
+      options:
+        - 语文默写
+        - 英语默写
+        - 两个都需要
+        - 构建/发布流程
+    validations:
+      required: true
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: 是否愿意自己动手
+      options:
+        - label: 我可以试着提 PR（不会也没关系，我会在 Issue 里问）
+          required: false

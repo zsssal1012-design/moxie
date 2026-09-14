@@ -1,0 +1,66 @@
+name: "🐞 Bug 反馈"
+description: "报告一个问题（界面错乱、出题不对、闪退等）"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量把「复现步骤」写清楚，这决定了修复速度。
+  - type: dropdown
+    id: app
+    attributes:
+      label: 哪个应用
+      options:
+        - 语文默写 (yuwen-moxie)
+        - 英语默写 (english-moxie)
+        - 两个都是
+    validations:
+      required: true
+  - type: dropdown
+    id: form
+    attributes:
+      label: 你用的是哪种形式
+      options:
+        - 浏览器打开 HTML
+        - Android APK
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 设备与系统
+      description: 例如：华为平板 M6 / Android 10 / 自带浏览器；或 Chrome 130 / Windows 11
+      placeholder: 设备型号 + 系统版本 + 浏览器/App 版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      value: |
+        1. 打开 …
+        2. 点击 …
+        3. 看到 …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 你期望的正确行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际发生的行为
+      description: 能截图/录屏就更好了（直接把图片拖进这里）
+    validations:
+      required: true
+  - type: checkboxes
+    id: search
+    attributes:
+      label: 确认
+      options:
+        - label: 我已经搜索过已有 Issues，没有找到同样的问题
+          required: true
