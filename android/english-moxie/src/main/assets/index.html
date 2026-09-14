@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>英语默写</title>
+<style>
+:root{
+  --blue:#2563eb;--blue2:#1d4ed8;--ink:#1f2937;--ink2:#64748b;
+  --grad:linear-gradient(135deg,#3b82f6,#1d4ed8);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei",sans-serif;color:var(--ink);
+  background:linear-gradient(130deg,#e3f0ff 0%,#dbeafe 40%,#e0f2fe 72%,#d6ecff 100%)}
+body::before,body::after{content:"";position:fixed;border-radius:50%;filter:blur(70px);opacity:.5;z-index:0;pointer-events:none}
+body::before{width:46vw;height:46vw;left:-10vw;top:-18vh;background:#93c5fd}
+body::after{width:42vw;height:42vw;right:-8vw;bottom:-16vh;background:#7dd3fc}
+#app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:8px 12px 10px;gap:10px}
+
+.glass{background:rgba(255,255,255,.55);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 32px rgba(30,64,175,.12);border-radius:20px}
+.glass-inner{background:rgba(255,255,255,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.7);border-radius:14px}
+
+/* ===== 顶栏(默写时隐藏) ===== */
+.topbar{display:flex;align-items:center;gap:12px;padding:6px 14px;border-radius:20px;flex:none}
+.brand{font-size:17.5px;font-weight:800;white-space:nowrap}
+.seg{display:flex;background:rgba(255,255,255,.45);border-radius:999px;padding:3px;border:1px solid rgba(255,255,255,.7)}
+.seg button{border:none;background:transparent;padding:6px 15px;border-radius:999px;font-size:13px;font-weight:700;color:#475569;transition:all .2s}
+.seg button.active{background:#fff;color:var(--blue2);box-shadow:0 4px 14px rgba(30,64,175,.18)}
+.spacer{flex:1}
+.record-btn{border:none;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#fff;background:var(--grad);box-shadow:0 6px 16px rgba(59,130,246,.35)}
+.record-btn:active{transform:translateY(2px)}
+
+/* ===== 主区域 ===== */
+main{flex:1;min-height:0;display:flex}
+.page{flex:1;min-width:0;display:flex;gap:12px;overflow-y:auto}
+.hidden{display:none!important}
+.split-l{width:46%;min-width:0;display:flex;flex-direction:column;padding:14px}
+.split-r{flex:1;min-width:0;display:flex;align-items:center;justify-content:center}
+.hint-card{padding:24px 36px;text-align:center;color:#7c8aa5;font-size:14.5px;font-weight:600;border-radius:20px;background:rgba(255,255,255,.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6)}
+.hint-card .big{font-size:36px;display:block;margin-bottom:10px}
+
+/* ===== 单词准备页 ===== */
+.panel-title{font-size:15px;font-weight:800;margin-bottom:9px}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+select{appearance:none;-webkit-appearance:none;border:none;outline:none;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.9);border-radius:11px;padding:6px 26px 6px 10px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%233b82f6' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center;box-shadow:0 3px 10px rgba(30,64,175,.08)}
+.mini-btn{border:none;border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:700;color:#475569;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.85)}
+.mini-btn:active{transform:scale(.96)}
+.unit-list{flex:1;min-height:0;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:8px}
+.unit-list::-webkit-scrollbar{width:5px}
+.unit-list::-webkit-scrollbar-thumb{background:rgba(59,130,246,.35);border-radius:99px}
+.unit-card{padding:9px 12px}
+.unit-head{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.unit-head input[type=checkbox]{width:19px;height:19px;accent-color:#3b82f6;flex:none}
+.unit-name{font-size:13.5px;font-weight:800;flex:1}
+.unit-count{font-size:11px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.14);padding:2px 9px;border-radius:99px}
+.tri{font-size:12px;color:#94a3b8;transition:transform .25s}
+.tri.open{transform:rotate(90deg);color:var(--blue)}
+.unit-words{display:none;margin-top:9px;padding-top:9px;border-top:1px dashed rgba(148,163,184,.4)}
+.unit-words.open{display:block}
+.words-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.wchip{padding:6px 11px;border-radius:11px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;transition:all .16s;background:rgba(255,255,255,.85);border:1.5px solid rgba(226,232,240,.9)}
+.wchip:active{transform:scale(.93)}
+.wchip.sel{background:linear-gradient(135deg,rgba(147,197,253,.55),rgba(191,219,254,.45));backdrop-filter:blur(10px);border-color:rgba(59,130,246,.8);color:var(--blue2);box-shadow:0 0 0 1px rgba(59,130,246,.35) inset,0 5px 14px rgba(59,130,246,.22);transform:scale(1.04)}
+.wchip .st{font-size:10px;color:#94a3b8}
+.wchip.sel .st{color:var(--blue)}
+.selall-row{display:flex;justify-content:flex-end;margin-bottom:7px}
+.selall-btn{border:none;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,#38bdf8,#0284c7);box-shadow:0 4px 12px rgba(56,189,248,.3)}
+.locked-box{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;font-weight:700;gap:8px}
+.bottom-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;padding:7px 12px;border-radius:16px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7)}
+.sel-info{font-size:12.5px;font-weight:700;color:#475569}
+.start-btn{border:none;border-radius:999px;padding:9px 20px;font-size:13.5px;font-weight:800;color:#fff;background:var(--grad);box-shadow:0 8px 20px rgba(59,130,246,.4)}
+.start-btn:disabled{opacity:.45;box-shadow:none}
+.start-btn:not(:disabled):active{transform:translateY(2px)}
+
+/* ===== 短语准备页 ===== */
+.phrase-panel{width:58%;flex-direction:column;padding:12px 14px;gap:8px}
+.phrase-top{display:flex;gap:8px;align-items:center;flex:none}
+.save-btn{margin-left:auto;border:none;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:800;color:#fff;background:var(--grad);box-shadow:0 6px 16px rgba(59,130,246,.35)}
+.save-btn:active{transform:translateY(2px)}
+.danger-ghost{border:none;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;color:#e11d48;background:rgba(225,29,72,.08);border:1px solid rgba(225,29,72,.25)}
+.section-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.section-list::-webkit-scrollbar{width:5px}
+.section-list::-webkit-scrollbar-thumb{background:rgba(59,130,246,.35);border-radius:99px}
+.ph-sec{padding:9px 12px}
+.ph-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ph-sec-title{font-size:13.5px;font-weight:800;flex:1}
+.ph-sec-cnt{font-size:11px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.14);padding:2px 8px;border-radius:99px}
+.ph-input-row{display:flex;gap:7px;margin-bottom:7px}
+.ph-input-row textarea{flex:1;resize:none;outline:none;border-radius:10px;padding:7px 10px;font-size:12px;font-family:inherit;background:rgba(255,255,255,.8);border:1px solid rgba(226,232,240,.9);color:var(--ink);min-height:46px}
+.ph-input-row textarea:focus{border-color:rgba(59,130,246,.6)}
+.tr-btn{border:none;border-radius:10px;padding:0 11px;font-size:11.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#38bdf8,#0284c7);box-shadow:0 4px 12px rgba(56,189,248,.3);flex:none}
+.tr-btn:disabled{opacity:.5}
+.ph-items{display:flex;flex-direction:column;gap:6px}
+.ph-item{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:11px;background:rgba(255,255,255,.55);border:1px solid rgba(241,245,249,.9)}
+.ph-item.checked{background:linear-gradient(135deg,rgba(147,197,253,.4),rgba(191,219,254,.3));border-color:rgba(59,130,246,.6)}
+.ph-item input[type=checkbox]{width:17px;height:17px;accent-color:#3b82f6;flex:none}
+.ph-en{font-size:12px;font-weight:700;color:#1e293b;flex:1;word-break:break-word}
+.ph-cn{font-size:11px;color:#94a3b8;max-width:38%;text-align:right;word-break:break-word}
+.ph-del{border:none;background:transparent;color:#cbd5e1;font-size:13px}
+.ph-del:active{color:#e11d48}
+.ph-empty{font-size:12px;color:#a5b0c2;padding:4px 2px}
+
+/* ===== 默写页(全新: 无顶栏/无按钮/大卡片) ===== */
+#pageQuiz{flex-direction:column;gap:10px;overflow:hidden}
+.quiz-top{flex:none;display:flex;align-items:center;gap:12px;padding:7px 14px;border-radius:18px}
+.quiz-exit{border:none;width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.65);color:#64748b;font-size:14px;font-weight:800;flex:none}
+.quiz-prog{font-size:14px;font-weight:800;color:#475569;white-space:nowrap}
+.prog-track{flex:1;height:12px;border-radius:99px;background:rgba(255,255,255,.6);overflow:hidden;border:1px solid rgba(255,255,255,.7)}
+.prog-fill{height:100%;border-radius:99px;background:var(--grad);transition:width .3s ease}
+.quiz-type-badge{font-size:11px;font-weight:800;color:var(--blue);background:rgba(59,130,246,.14);padding:4px 12px;border-radius:99px}
+.quiz-body{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.quiz-card{width:88%;max-width:960px;padding:52px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:26px;cursor:pointer;user-select:none}
+.quiz-card:active{transform:scale(.985)}
+.q-text{font-size:54px;font-weight:900;color:#111826;line-height:1.3;word-break:break-word;max-height:36vh;overflow-y:auto}
+.q-text.small{font-size:36px}
+.q-ans{display:none;padding:14px 32px;border-radius:16px;background:linear-gradient(135deg,rgba(147,197,253,.45),rgba(191,219,254,.35));border:1.5px solid rgba(59,130,246,.55);font-size:34px;font-weight:800;color:var(--blue2);word-break:break-word;max-width:95%}
+.q-ans.show{display:block;animation:fadeSlide .25s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tap-hint{position:absolute;bottom:14px;font-size:12.5px;font-weight:800;color:rgba(37,99,235,.45);pointer-events:none;user-select:none}
+.tap-l{left:26px}.tap-r{right:26px}
+
+/* ===== 结果页 ===== */
+#pageResult{flex-direction:column;align-items:center;gap:12px}
+.result-card{width:84%;max-width:840px;flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 24px;gap:12px}
+.result-title{text-align:center;font-size:19px;font-weight:900}
+.result-sub{text-align:center;font-size:12px;color:#7c8aa5;font-weight:700}
+.result-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.result-list::-webkit-scrollbar{width:5px}
+.result-list::-webkit-scrollbar-thumb{background:rgba(59,130,246,.35);border-radius:99px}
+.result-chip{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:800;color:var(--blue2);background:linear-gradient(135deg,rgba(147,197,253,.45),rgba(191,219,254,.35));border:1px solid rgba(59,130,246,.55)}
+.result-chip .no{font-size:11px;color:#60a5fa;font-weight:800}
+.result-btns{display:flex;gap:12px;justify-content:center}
+.qbtn{border:none;border-radius:999px;padding:10px 24px;font-size:13.5px;font-weight:800;color:#fff;background:var(--grad);box-shadow:0 8px 20px rgba(59,130,246,.25)}
+.qbtn.gray{background:linear-gradient(135deg,#94a3b8,#64748b)}
+
+/* ===== 记录页 ===== */
+#pageRecord{flex-direction:column;gap:10px}
+.rec-top{flex:none;display:flex;align-items:center;gap:12px;padding:7px 14px;border-radius:18px}
+.back-btn{border:none;border-radius:11px;padding:7px 14px;font-size:12.5px;font-weight:800;color:#475569;background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.9)}
+.rec-title{font-size:16px;font-weight:900;flex:1}
+.clear-rec{border:none;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;color:#e11d48;background:rgba(225,29,72,.08);border:1px solid rgba(225,29,72,.25)}
+.filter-row{flex:none;display:flex;gap:10px;align-items:center;padding:6px 12px;border-radius:15px;flex-wrap:wrap}
+.f-label{font-size:11px;font-weight:800;color:#7c8aa5}
+.chip{border:none;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:700;color:#475569;background:rgba(255,255,255,.6);border:1px solid rgba(226,232,240,.9)}
+.chip.active{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(59,130,246,.35)}
+.record-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.record-list::-webkit-scrollbar{width:5px}
+.record-list::-webkit-scrollbar-thumb{background:rgba(59,130,246,.35);border-radius:99px}
+.date-group{font-size:11px;font-weight:900;color:#7c8aa5;padding:5px 4px 0;letter-spacing:1px}
+.rec{padding:9px 13px}
+.rec-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.rec-time{font-size:12px;font-weight:800;color:#334155;white-space:nowrap}
+.badge{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.word{color:var(--blue2);background:rgba(59,130,246,.14)}
+.badge.phrase{color:#0e7490;background:rgba(14,116,144,.12)}
+.rec-scope{font-size:12px;font-weight:700;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-cnt{font-size:11px;font-weight:800;color:var(--blue);background:rgba(59,130,246,.12);padding:2px 9px;border-radius:99px;white-space:nowrap}
+.rec .tri{font-size:13px}
+.rec-body{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(148,163,184,.4)}
+.rec-body.open{display:block}
+.rec-item{display:flex;align-items:baseline;gap:8px;padding:5px 2px;border-bottom:1px solid rgba(241,245,249,.9);font-size:12.5px}
+.rec-item:last-child{border-bottom:none}
+.rec-item .no{font-size:11px;color:#94a3b8;font-weight:800;width:22px;flex:none}
+.rec-item .en{font-weight:800;color:#1e293b}
+.rec-item .cn{font-size:11px;color:#94a3b8;margin-left:auto;text-align:right}
+.empty-tip{text-align:center;color:#94a3b8;font-weight:700;padding:40px 0}
+
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:rgba(30,41,59,.82);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:.3s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar glass" id="topbar">
+    <div class="brand">📖 英语默写</div>
+    <div class="seg">
+      <button id="tabWord" class="active">abc 单词</button>
+      <button id="tabPhrase">✏️ 短语</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="record-btn" id="btnRecord">📊 默写记录</button>
+  </header>
+
+  <main>
+    <!-- 单词准备页 -->
+    <section class="page" id="pageWord">
+      <div class="split-l glass">
+        <div class="panel-title">📚 选择词库</div>
+        <div class="row">
+          <select id="gradeSelWord"></select>
+          <button class="mini-btn" id="expandAllBtn">全部展开</button>
+          <button class="mini-btn" id="clearSelBtn">清空已选</button>
+        </div>
+        <div class="unit-list" id="unitList"></div>
+        <div class="bottom-bar">
+          <span class="sel-info" id="selCount">已选 0 个单词</span>
+          <button class="start-btn" id="startWordBtn" disabled>▶ 开始默写</button>
+        </div>
+      </div>
+      <div class="split-r">
+        <div class="hint-card"><span class="big">📚</span>在左侧勾选单词后<br>点击「开始默写」</div>
+      </div>
+    </section>
+
+    <!-- 短语准备页 -->
+    <section class="page hidden" id="pagePhrase">
+      <div class="split-r" style="width:42%;flex:none">
+        <div class="hint-card"><span class="big">📝</span>在右侧输入或勾选短语<br>然后点击「开始默写」</div>
+      </div>
+      <div class="split-l glass phrase-panel" style="width:58%">
+        <div class="phrase-top">
+          <select id="gradeSelPhrase"></select>
+          <select id="unitSelPhrase"></select>
+          <button class="save-btn" id="savePhraseBtn">💾 保存题库</button>
+        </div>
+        <div class="phrase-top">
+          <button class="danger-ghost" id="delPhraseLibBtn">🗑 删除当前题库</button>
+          <div class="spacer"></div>
+          <span class="sel-info" id="phraseSelInfo">已选 0 条</span>
+        </div>
+        <div class="section-list" id="sectionList"></div>
+        <div class="bottom-bar">
+          <span class="sel-info" id="phraseCountInfo"></span>
+          <button class="start-btn" id="startPhraseBtn" disabled>▶ 开始默写</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 默写页 -->
+    <section class="page hidden" id="pageQuiz">
+      <div class="quiz-top glass">
+        <button class="quiz-exit" id="quizExit">✕</button>
+        <span class="quiz-prog" id="quizProg">1 / 10</span>
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <span class="quiz-type-badge" id="quizTypeBadge">单词默写</span>
+      </div>
+      <div class="quiz-body" id="quizBody">
+        <div class="quiz-card glass" id="quizCard">
+          <div class="q-text" id="qText">加载中...</div>
+          <div class="q-ans" id="qAns"></div>
+        </div>
+        <div class="tap-hint tap-l">‹ 点左侧=上一题</div>
+        <div class="tap-hint tap-r">点右侧=下一题 ›</div>
+        <div class="tap-hint" style="left:50%;transform:translateX(-50%);bottom:4px;opacity:.7">点卡片看答案</div>
+      </div>
+    </section>
+
+    <!-- 结果页 -->
+    <section class="page hidden" id="pageResult">
+      <div class="result-card glass">
+        <div>
+          <div class="result-title">🎉 本次默写完成</div>
+          <div class="result-sub" id="resultSub"></div>
+        </div>
+        <div class="result-list" id="resultList"></div>
+        <div class="result-btns">
+          <button class="qbtn" id="resultBackBtn">返回默写页</button>
+          <button class="qbtn gray" id="resultViewRecord">查看默写记录</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 记录页 -->
+    <section class="page hidden" id="pageRecord">
+      <div class="rec-top glass">
+        <button class="back-btn" id="recBack">← 返回</button>
+        <div class="rec-title">📊 默写记录</div>
+        <button class="clear-rec" id="clearRecBtn">清空记录</button>
+      </div>
+      <div class="filter-row glass-inner">
+        <span class="f-label">类型</span>
+        <button class="chip active" data-tf="all">全部</button>
+        <button class="chip" data-tf="word">单词</button>
+        <button class="chip" data-tf="phrase">短语</button>
+        <span class="f-label" style="margin-left:8px">单元</span>
+        <span id="unitFilterBox" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      </div>
+      <div class="record-list" id="recordList"></div>
+    </section>
+
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ================= 词库: 九年级上册全量(含词组, 第3位=1只要求认读) ================= */
+const LIBS = {
+  g7a:{name:"七年级上册",short:"七上",ready:false,units:[]},
+  g7b:{name:"七年级下册",short:"七下",ready:false,units:[]},
+  g8a:{name:"八年级上册",short:"八上",ready:false,units:[]},
+  g8b:{name:"八年级下册",short:"八下",ready:false,units:[]},
+  g9a:{name:"九年级上册",short:"九上",ready:true,units:[
+    {id:"U1",name:"Unit 1",w:[
+["organized","adj. 有条理的"],
+["order","n. 条理; 顺序"],
+["keep ... in (good) order","保持整齐"],
+["explain","vt. & vi. 解释"],
+["come up with","想出, 找到 (答案)"],
+["careless","adj. 粗心的"],
+["neither","adv. 也不; det. & pron. 两者都不"],
+["neither ... nor ...","既不……也不……"],
+["nor","conj. & adv. 也不"],
+["accountant","n. 会计",1],
+["suppose","vt. & vi. 认为, 推测; 假设"],
+["social","adj. 好交际的, 社交的"],
+["involve","vt. 包含, 需要; 牵涉",1],
+["impress","vt. & vi. 使留下深刻的印象",1],
+["imagination","n. 想象力"],
+["manager","n. 经理"],
+["quit","vt. & vi. 离开, 离任",1],
+["suit","vt. 适合"],
+["railway","n. 铁路; 铁路系统"],
+["mention","vt. 提到, 说到, 写到"],
+["standard","n. 标准; adj. 标准的"],
+["tough","adj. 艰难的",1],
+["at all times","总是, 随时, 永远"],
+["passenger","n. 乘客"],
+["exactly","adv. (答语) 完全正确; 准确地"],
+["improvement","n. 改进, 改善"],
+["either ... or ...","要么……要么……, 不是……就是……"],
+["decide on","决定, 选定"],
+["personality","n. 性格, 个性",1],
+["take on","承担 (责任), 决定做"],
+["challenge","n. 挑战"],
+["winner","n. 获胜者"],
+["outgoing","adj. 外向的, 友好的"],
+["opposite","n. 对立的人 (或事物)"],
+["kindness","n. 善良"],
+["matter","n. 关于……的事情; 问题"],
+["as a matter of fact","事实上"],
+["let sb down","使失望"],
+["probably","adv. 很可能, 大概"],
+["encouragement","n. 鼓励"],
+["behaviour","n. (AmE behavior) 表现方式, 行为",1],
+["pass sth on to sb","传给某人"],
+["son","n. 儿子"],
+["remain","linking v. 保持不变, 依然是"],
+["confident","adj. 自信的"],
+["likely","adv. 可能; adj. 可能的"],
+["negative","adj. 消极的; 有害的; 否定的"],
+["lecture","n. 演讲, 讲座",1],
+["connection","n. 关联; 联结"],
+["speaker","n. 发言者; 讲 (某种语言) 的人"],
+["point","vt. & vi. 指向, 指引"],
+["point out","指出"],
+["pay off","成功, 奏效"],
+["succeed","vi. 成功"],
+["position","n. 职位; 位置"],
+["president","n. 主席; 院长; 董事长"],
+["cooperate","vi. 合作"],
+["voice","vt. 表达"],
+["consider","vt. & vi. 仔细考虑"]
+    ]},
+    {id:"U2",name:"Unit 2",w:[
+["teenage","adj. 青少年的, 十几岁的"],
+["drive","vt. 迫使; 驾驶"],
+["mad","adj. 气愤; 疯的"],
+["be in low spirits","情绪低落"],
+["lately","adv. 最近"],
+["cut back on sth","减少, 削减, 缩减"],
+["decision","n. 决定"],
+["patience","n. 耐心",1],
+["stick","vt. & vi. 粘贴, 粘住; 刺, 插入"],
+["stick to","坚持"],
+["stress","n. 精神压力, 心理负担; vt. & vi. (使) 焦虑不安, 疲惫不堪"],
+["under stress","在压力之下, 承受压力"],
+["waste","vt. 浪费, 滥用"],
+["mobile phone","n. 手机"],
+["regret","vt. 懊悔, 感到遗憾"],
+["exam","n. (= examination) 考试"],
+["focused","adj. 注意力集中的, 目标明确的"],
+["argue","vi. 争论, 争吵, 争辩"],
+["silly","adj. 傻的, 愚蠢的"],
+["normal","adj. 正常的, 典型的"],
+["stress sb out","使极度焦虑, 使压力大"],
+["bottom","n. 底部; 底"],
+["dialogue","n. 对话"],
+["communicate","vt. & vi. 沟通; 交流"],
+["dictionary","n. 词典, 辞书"],
+["hear of","听说"],
+["youth","n. 青年, 青春"],
+["stage","n. 阶段, 时期; 舞台"],
+["experience","vt. 经历, 体验"],
+["rapid","adj. 快速的"],
+["ugly","adj. 丑陋的"],
+["mood","n. 情绪, 心情",1],
+["risk","vt. 冒……的风险; 冒险做"],
+["risk sth/doing sth","冒……的风险"],
+["go through","经历, 遭受"],
+["adult","n. 成年人"],
+["mean","adj. 刻薄, 吝啬的"],
+["stranger","n. 陌生人; 外地人"],
+["uncomfortable","adj. 不自在的, 使人不舒服的"],
+["midterm","adj. 期中的"],
+["tight","adj. 紧的",1],
+["overweight","adj. 超重的"],
+["bully","vt. 恐吓, 伤害, 胁迫; n. 恃强凌弱之人, 恶霸"],
+["stand up for sb/sth","支持, 维护"],
+["screen","n. 屏幕"],
+["bedtime","n. 就寝时间"],
+["pain","n. 痛苦; 疼痛"],
+["get sb down","使沮丧, 使忧郁"],
+["shame","n. 羞耻; 让人遗憾的事"]
+    ]},
+    {id:"U3",name:"Unit 3",w:[
+["seed","n. 种子, 起因",1],
+["dancer","n. 舞蹈演员, 跳舞者"],
+["recognize","vt. (= recognise) 赞赏, 确认, 认识, 辨别出"],
+["contribution","n. 贡献",1],
+["overcome","vt. 克服, 解决",1],
+["suffering","n. 痛苦, 苦难"],
+["household","n. 家庭, 一户",1],
+["surprisingly","adv. 使人惊奇地"],
+["attitude","n. 态度",1],
+["despite","prep. 尽管, 即使",1],
+["universe","n. 宇宙"],
+["continued","adj. 连续不断的"],
+["scientific","adj. 科学的"],
+["audience","n. 读者, 观众, 听众",1],
+["highly","adv. 很, 非常"],
+["household name","n. 家喻户晓的人物"],
+["inspiration","n. 鼓舞人心的人 (或事物), 灵感",1],
+["further","vt. 促进, 增进",1],
+["diagnose","vt. 诊断",1],
+["be diagnosed with","被诊断出患有…… (疾病)"],
+["shortly","adv. 不久"],
+["rob","vt. 掠夺",1],
+["rob sb of sth","剥夺 (某人所需或应得之物)"],
+["muscle","n. 肌肉",1],
+["yet","conj. 然而, 但是"],
+["whenever","conj. 无论何时"],
+["achievement","n. 成就",1],
+["stand in sb's way","妨碍某人, 阻止某人"],
+["however","adv. 不管多么"],
+["musician","n. 音乐家"],
+["death","n. 死亡"],
+["shoulder","n. 肩膀"],
+["make it (to)","获得成功"],
+["coach","n. 教练"]
+    ]},
+    {id:"U4",name:"Unit 4",w:[
+["pretty","adv. 相当"],
+["knee","n. 膝, 膝盖"],
+["challenging","adj. 有挑战性的"],
+["cheers","exclam. 再见; 干杯"],
+["fair","adj. 公平的, 公正的"],
+["fair play","n. 公平竞赛, 公平办事"],
+["Irish","adj. 爱尔兰 (人) 的, 爱尔兰语的"],
+["gymnast","n. 体操运动员",1],
+["compete","vi. 参加比赛, 竞争"],
+["injure","vt. 伤害, 使受伤",1],
+["performance","n. 表现, 表演",1],
+["will","n. 意志, 毅力; 意愿"],
+["runner","n. 赛跑运动员, 跑步者"],
+["semi-final","n. 半决赛"],
+["whatever","det. & pron. 无论什么, 不管什么"],
+["diary","n. 日记"],
+["victory","n. 胜利"],
+["live through sth","经历 (灾难等) 而幸存"],
+["perform","vt. 做, 执行; vt. & vi. 表演"],
+["disappoint","vt. 使……失望"],
+["cactus","n. 仙人掌",1],
+["lotus","n. 莲属植物; 莲花图案",1],
+["self","n. 自我, 本来面目",1],
+["peanut","n. 花生",1],
+["unused","adj. 未用过的"],
+["unlike","prep. 不像"],
+["dig out","挖掘出; 发掘"],
+["stem","n. 茎, 梗, 柄",1],
+["bear","vt. 结 (果实), 开 (花); 生 (孩子)"],
+["attractive","adj. 吸引人的",1],
+["compare","vt. 比较, 对比"],
+["expect sth of sb","期待某人做某事 (或具备某种能力, 品质)"],
+["hidden","adj. 隐藏的, 隐匿的"],
+["society","n. 社会"],
+["helpfulness","n. 乐于助人"],
+["purpose","n. 重要意义; 目的, 意图"],
+["satisfied","adj. 满意的"],
+["boss","n. 老板, 上司"],
+["dentist","n. 牙科医生"],
+["wife","n. (pl. wives) 妻子"],
+["passage","n. 章节, 段落, 乐段"],
+["stamp","n. 邮票"],
+["daughter","n. 女儿"],
+["devote","vt. 献身, 致力于, 专心",1],
+["devote ... to ...","把……奉献给……"],
+["research","vt., vi. & n. 研究"],
+["house","vt. 收藏, 安置"],
+["overtourism","n. 过度旅游"],
+["digitalize","vt. (= digitalise) 使 (信息) 数字化"],
+["pity","n. 遗憾"],
+["dig","vt. & vi. 挖, 掘"],
+["dig up","掘出, 挖出"],
+["a couple of","几个; 一对"],
+["celebration","n. 庆祝, 庆典"],
+["oil","n. 食用油; 石油"],
+["graduate","vi. & vt. (大学) 毕业"],
+["serve","vt. 满足……的需要; vt. & vi. 服务; 提供"],
+["condition","n. 状态, 状况"],
+["contribute","vt. & vi. 贡献, 增进, 促成",1],
+["judge","vt. & vi. 判断, 认为; vt. 审判"],
+["amazed","adj. 大为惊奇",1],
+["make up one's mind","下定决心"]
+    ]},
+    {id:"U5",name:"Unit 5",w:[
+["keyboard","n. 键盘"],
+["bow","n. 琴弓, 弓",1],
+["string","n. 弦; 细绳",1],
+["guitar","n. 吉他"],
+["pear-shaped","adj. 梨形的"],
+["strength","n. 强度, 力量",1],
+["musical","adj. 音乐的"],
+["instrument","n. 乐器, 仪器"],
+["boundary","n. 边界"],
+["composer","n. 作曲家",1],
+["unique","adj. 独一无二的",1],
+["earn","vt. 赢得, 搏得; vt. & vi. 赚得, 挣钱",1],
+["familiar","adj. 熟悉的"],
+["familiar with sth","通晓, 熟悉"],
+["worldwide","adv. 在世界各地; adj. 影响全世界的",1],
+["simply","adv. 仅仅"],
+["flow","n. 流, 流动",1],
+["eastern","adj. 东方国家的, 东方的"],
+["bell","n. 钟 (声), 电铃 (声)"],
+["talented","adj. 有天赋的"],
+["mixture","n. 混合"],
+["press","n. 新闻界, 平面媒体"],
+["brain","n. 脑; 智力"],
+["ticket","n. 票, 入场券"],
+["rather","adv. 相当, 在某种程度上"],
+["concert","n. 音乐会"],
+["country","n. 乡村"],
+["jazz","n. 爵士乐",1],
+["rock","n. 摇滚乐"],
+["cowboy","n. 牛仔"],
+["drum","n. 鼓",1],
+["African","adj. 非洲 (人) 的"],
+["American","n. 美国人, 美洲人"],
+["make up","创作, 编造"],
+["attend","vt. & vi. 出席, 参加; 定期去 (某处)"],
+["quick","adj. 迅速的"],
+["jasmine","n. 茉莉",1],
+["flute","n. 长笛",1],
+["range","n. 一系列, 类, 范围",1],
+["gentle","adj. 柔和的; 温柔的",1],
+["download","vt. 下载"],
+["calming","adj. 令人平静的"]
+    ]},
+    {id:"U6",name:"Unit 6",w:[
+["calligrapher","n. 书法家",1],
+["date back (to ...)","追溯到"],
+["bottled","adj. 瓶装的"],
+["calligraphy","n. 书法",1],
+["breath","n. 呼吸的空气"],
+["slow down","(使) 慢下来"],
+["pressure","n. 心理压力; 压力"],
+["under pressure","承受着压力"],
+["tip","n. 尖, 尖端",1],
+["final","adj. 最终的, 最后的"],
+["stroke","n. 笔画",1],
+["appear","vi. 出现"],
+["doorway","n. 门口, 门道"],
+["give it a try","试一试"],
+["still","adj. 静止的, 平静的, 安静的"],
+["concentrate","vt. & vi. 集中 (注意力); vt. 使……集中",1],
+["concentrate on","集中注意力 (做某事)"],
+["pleasure","n. 快乐, 满足"],
+["take pleasure in","从……中获得乐趣"],
+["undoubtedly","adv. 无疑地"],
+["character","n. 文字"],
+["artistic","adj. 艺术的"],
+["characteristic","n. 特征"],
+["pride","n. 自豪, 骄傲"],
+["beautifully","adv. 漂亮地"],
+["technique","n. 技巧, 技艺",1],
+["unfamiliar","adj. 不熟悉的"],
+["up close","很近地, 在近处"],
+["basket","n. 篮, 篓, 筐"],
+["general","adj. 一般的; 总的"],
+["in general","大体上, 总的说来"],
+["brushwork","n. 画法, 笔触"],
+["similarity","n. 相似性"],
+["present","vt. 展现"],
+["perhaps","adv. 可能, 也许"],
+["sometime","adv. 在某时"],
+["expert","n. 专家"],
+["a great deal","大量, 很多"]
+    ]},
+    {id:"U7",name:"Unit 7",w:[
+["action","n. (= action film) 动作片"],
+["comedy","n. 喜剧",1],
+["cartoon","n. 卡通片; 漫画"],
+["documentary","n. 纪录片, 纪实广播 (或电视) 节目",1],
+["romance","n. 爱情故事; 传奇故事",1],
+["all-time","adj. 空前的, 一向的"],
+["actress","n. 女演员"],
+["loss","n. 去世; 丧失, 损失"],
+["humanitarian","n. 人道主义者",1],
+["ballet","n. 芭蕾舞",1],
+["charm","n. 魅力",1],
+["insist","vt. & vi. 坚持说; 坚决要求",1],
+["based","adj. 基于",1],
+["based upon/on","以……为基础 (或根据)"],
+["major","adj. 主要的; 重要的",1],
+["mark","vt. 是……的迹象, 表明; 标示"],
+["career","n. 事业, 职业",1],
+["princess","n. 公主"],
+["appearance","n. 演出; 出现"],
+["tireless","adj. 不知疲倦的"],
+["rush hour","n. 交通高峰期"],
+["park","vt. & vi. 停 (车)"],
+["actor","n. 演员"],
+["storyteller","n. 故事 (或小说) 作者"],
+["script","n. 剧本, 脚本",1],
+["mistake","vt. 误会, 误解"],
+["steal","vt. 偷, 窃取"],
+["steal the show","吸引更多的注意, 抢风头"],
+["supporting","adj. 次要的, 配角的",1],
+["kung fu","n. 功夫"],
+["handsome","adj. 英俊的, 帅气的"],
+["inspiring","adj. 鼓舞的, 鼓舞人心的",1],
+["price","n. 价格, 代价"],
+["scriptwriter","n. 编剧",1],
+["director","n. 导演"],
+["film-maker","n. 制片人"],
+["film","vi. & vt. 拍摄"],
+["shoot","vt. & vi. 拍摄"],
+["post-production","n. 后期制作"],
+["angel","n. 天使",1],
+["radio","n. 无线电广播; 收音机"],
+["discover","vt. 发现"],
+["cancer","n. 癌症"],
+["pass away","去世"],
+["peacefully","adv. 平静地"],
+["star","vi. 主演, 担任主角"],
+["a number of","一些"],
+["aid","n., vi. & vt. 援助, 帮助"],
+["editor","n. 剪辑员, 编辑",1],
+["bring sb/sth to life","使更有趣 (生动)"],
+["come to life","有了生命, 活了过来"],
+["world-class","adj. 世界级的, 世界一流的"],
+["wrestler","n. 摔跤运动员",1],
+["touching","adj. 感人的"],
+["fighter","n. 斗士"],
+["elder","adj. 年纪较长的"]
+    ]},
+    {id:"U8",name:"Unit 8",w:[
+["classic","adj. 最优秀的; 典型的; 典雅的"],
+["short story","n. 短篇小说"],
+["take one's time","从容不迫, 慢慢来"],
+["against","prep. 倚, 紧靠; 以……为背景"],
+["branch","n. 树枝",1],
+["bedside","n. 床边"],
+["anger","n. 愤怒, 怒气",1],
+["make sense","有意义, 讲得通"],
+["have (...) to do with","与……有关"],
+["apartment","n. 公寓套房"],
+["masterpiece","n. 杰作"],
+["fool","n. 傻瓜"],
+["remain","vi. 剩余, 继续存在, 逗留"],
+["widely","adv. 普遍地, 广泛地"],
+["run out of","用完, 耗尽"],
+["fair","n. 展销会; 集市"],
+["act","n. (戏剧等) 一幕; 行为, 表演"],
+["seat","vt. (使) 就座, 坐"],
+["throne","n. 宝座; 王位",1],
+["unable","adj. 未能, 无法"],
+["enemy","n. 敌人"],
+["writing","n. 著作, 作品"],
+["image","n. 意象, 图像",1],
+["lasting","adj. 持久的"],
+["show up","出现, 露面"],
+["mirror","n. 镜子"],
+["knock","n. 敲门声, 敲击声"],
+["hurry up","赶快, 急忙 (做某事)"],
+["doorbell","n. 门铃"],
+["ring","vi. 发出铃声; vt. & vi. (使) 发出钟声"]
+    ]}
+  ]},
+  g9b:{name:"九年级下册",short:"九下",ready:false,units:[]}
+};
+
+/* ================= 状态 ================= */
+const PHRASE_SECTIONS=["Welcome","Reading","Grammar","Integration"];
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+let currentWordLib="g9a",currentPhraseLib="g9a",currentPhraseUnit="U1";
+let selection=new Set(),expanded=new Set();
+let phraseLibs=store.get("phraseLibs_v3",{});
+let quiz=null;
+let recTypeFilter="all",recUnitFilter="all",recFrom="pageWord";
+
+function esc(s){var A=String.fromCharCode(38),Q=String.fromCharCode(34);return String(s).split(A).join(A+"amp;").split("<").join(A+"lt;").split(">").join(A+"gt;").split(Q).join(A+"quot;");}
+function shuffle(a){const c=a.slice();for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}return c;}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove("show"),1800);}
+function fmtTime(ts){const d=new Date(ts),p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());}
+function quizPageOf(t){return t==="phrase"?"pagePhrase":"pageWord";}
+/* 核心: 默写页隐藏整个顶栏, 其余页显示 */
+function pages(name){
+  ["pageWord","pagePhrase","pageQuiz","pageResult","pageRecord"].forEach(id=>$("#"+id).classList.add("hidden"));
+  $("#"+name).classList.remove("hidden");
+  $("#topbar").style.display=(name==="pageQuiz")?"none":"flex";
+}
+
+/* ================= 顶栏 ================= */
+$("#tabWord").onclick=()=>{$("#tabWord").classList.add("active");$("#tabPhrase").classList.remove("active");pages("pageWord");};
+$("#tabPhrase").onclick=()=>{$("#tabPhrase").classList.add("active");$("#tabWord").classList.remove("active");pages("pagePhrase");};
+$("#btnRecord").onclick=()=>{recFrom=$("#pagePhrase").classList.contains("hidden")?"pageWord":"pagePhrase";pages("pageRecord");recTypeFilter="all";recUnitFilter="all";renderRecordFilters();renderRecords();};
+
+/* ================= 单词模块 ================= */
+function initGradeSelects(){
+  const gs=$("#gradeSelWord"),gp=$("#gradeSelPhrase");
+  gs.innerHTML="";gp.innerHTML="";
+  Object.keys(LIBS).forEach(k=>{
+    const lib=LIBS[k];
+    gs.insertAdjacentHTML("beforeend",'<option value="'+k+'">'+lib.name+(lib.ready?"":"（词库待导入）")+'</option>');
+    gp.insertAdjacentHTML("beforeend",'<option value="'+k+'">'+lib.name+'</option>');
+  });
+  gs.value="g9a";gp.value="g9a";
+  gs.onchange=()=>{currentWordLib=gs.value;selection.clear();expanded.clear();renderUnits();};
+  gp.onchange=()=>{currentPhraseLib=gp.value;renderPhrase();};
+}
+function renderUnits(){
+  const lib=LIBS[currentWordLib],box=$("#unitList");
+  $("#startWordBtn").disabled=true;$("#selCount").textContent="已选 0 个单词";
+  if(!lib.ready){box.innerHTML='<div class="locked-box"><span style="font-size:38px">🔒</span>该年级词库暂未导入</div>';return;}
+  box.innerHTML="";
+  lib.units.forEach((unit,ui)=>{
+    const card=document.createElement("div");
+    card.className="unit-card glass-inner";
+    card.innerHTML='<div class="unit-head"><input type="checkbox" class="u-check"><span class="unit-name">'+unit.name+'</span><span class="unit-count">'+unit.w.length+'词</span><span class="tri">▶</span></div><div class="unit-words"><div class="selall-row"><button class="selall-btn">全选本单元</button></div><div class="words-wrap"></div></div>';
+    box.appendChild(card);
+    const words=card.querySelector(".unit-words"),tri=card.querySelector(".tri"),check=card.querySelector(".u-check");
+    card.querySelector(".unit-head").onclick=function(e){
+      if(e.target===check)return;
+      const open=words.classList.toggle("open");tri.classList.toggle("open",open);
+    };
+    check.onchange=function(){
+      unit.w.forEach((w,wi)=>{const k=ui+"-"+wi;this.checked?selection.add(k):selection.delete(k);});
+      syncChips(card,ui,unit);updateSelInfo();
+    };
+    card.querySelector(".selall-btn").onclick=function(e){
+      e.stopPropagation();
+      const all=unit.w.every((w,wi)=>selection.has(ui+"-"+wi));
+      unit.w.forEach((w,wi)=>{const k=ui+"-"+wi;all?selection.delete(k):selection.add(k);});
+      check.checked=!all;syncChips(card,ui,unit);updateSelInfo();
+    };
+    const wrap=card.querySelector(".words-wrap");
+    unit.w.forEach((w,wi)=>{
+      const chip=document.createElement("span");
+      chip.className="wchip"+(selection.has(ui+"-"+wi)?" sel":"");
+      chip.innerHTML=esc(w[0])+(w[2]?'<span class="st">*</span>':"");
+      chip.onclick=()=>{const k=ui+"-"+wi;selection.has(k)?selection.delete(k):selection.add(k);chip.classList.toggle("sel");updateSelInfo();};
+      wrap.appendChild(chip);
+    });
+    if(expanded.has(ui)){words.classList.add("open");tri.classList.add("open");}
+  });
+}
+function syncChips(card,ui,unit){
+  card.querySelectorAll(".wchip").forEach((chip,wi)=>chip.classList.toggle("sel",selection.has(ui+"-"+wi)));
+}
+function updateSelInfo(){
+  $("#selCount").textContent="已选 "+selection.size+" 个单词";
+  $("#startWordBtn").disabled=selection.size===0;
+  const lib=LIBS[currentWordLib];
+  if(lib.ready)lib.units.forEach((unit,ui)=>{
+    const head=$("#unitList").children[ui];
+    if(head)head.querySelector(".u-check").checked=unit.w.every((w,wi)=>selection.has(ui+"-"+wi));
+  });
+}
+$("#expandAllBtn").onclick=()=>{
+  const lib=LIBS[currentWordLib];if(!lib.ready)return;
+  if(expanded.size===lib.units.length)expanded.clear();else lib.units.forEach((u,i)=>expanded.add(i));
+  renderUnits();
+};
+$("#clearSelBtn").onclick=()=>{selection.clear();renderUnits();};
+$("#startWordBtn").onclick=()=>{
+  const lib=LIBS[currentWordLib],items=[],unitsHit=new Set();
+  selection.forEach(k=>{const[ui,wi]=k.split("-").map(Number);items.push({en:lib.units[ui].w[wi][0],cn:lib.units[ui].w[wi][1]});unitsHit.add(lib.units[ui].id);});
+  if(!items.length)return;
+  quiz={type:"word",items:shuffle(items),idx:0,scope:lib.short+" · "+Array.from(unitsHit).join(" + "),units:Array.from(unitsHit)};
+  startQuiz();
+};
+
+/* ================= 短语模块 ================= */
+function phKey(){return currentPhraseLib+"|"+currentPhraseUnit;}
+function getPhData(){if(!phraseLibs[phKey()])phraseLibs[phKey()]={};PHRASE_SECTIONS.forEach(s=>{if(!phraseLibs[phKey()][s])phraseLibs[phKey()][s]=[];});return phraseLibs[phKey()];}
+function savePhraseLibs(){store.set("phraseLibs_v3",phraseLibs);}
+function renderPhrase(){
+  const us=$("#unitSelPhrase");
+  us.innerHTML="";
+  for(let i=1;i<=8;i++)us.insertAdjacentHTML("beforeend",'<option value="U'+i+'">Unit '+i+'</option>');
+  us.value=currentPhraseUnit;
+  us.onchange=()=>{currentPhraseUnit=us.value;renderSections();};
+  renderSections();
+}
+function renderSections(){
+  const box=$("#sectionList");box.innerHTML="";
+  const data=getPhData();let total=0;
+  PHRASE_SECTIONS.forEach((sec,si)=>{
+    const arr=data[sec]||[];total+=arr.length;
+    const card=document.createElement("div");
+    card.className="ph-sec glass-inner";
+    card.innerHTML='<div class="ph-sec-head"><span class="ph-sec-title">📄 '+sec+'</span><span class="ph-sec-cnt">'+arr.length+'条</span><button class="mini-btn" data-sa>全选</button></div><div class="ph-input-row"><textarea placeholder="输入英文短语/句子，每行一个">'+(data[sec+"_input"]?esc(data[sec+"_input"]):"")+'</textarea><button class="tr-btn">翻译并添加</button></div><div class="ph-items"></div>';
+    box.appendChild(card);
+    const ta=card.querySelector("textarea");
+    ta.oninput=()=>{data[sec+"_input"]=ta.value;savePhraseLibs();};
+    card.querySelector(".tr-btn").onclick=function(){translateAdd(si,this);};
+    card.querySelector("[data-sa]").onclick=()=>{
+      const all=arr.length&&arr.every(it=>it.sel);
+      arr.forEach(it=>it.sel=!all);savePhraseLibs();renderSections();
+    };
+    const itemsBox=card.querySelector(".ph-items");
+    if(!arr.length)itemsBox.innerHTML='<div class="ph-empty">暂无短语，输入后点击「翻译并添加」</div>';
+    arr.forEach((it,ii)=>{
+      const row=document.createElement("div");
+      row.className="ph-item"+(it.sel?" checked":"");
+      row.innerHTML='<input type="checkbox" '+(it.sel?"checked":"")+'><span class="ph-en">'+esc(it.en)+'</span><span class="ph-cn">'+esc(it.cn||"")+'</span><button class="ph-del">✕</button>';
+      row.querySelector("input").onchange=function(){it.sel=this.checked;row.classList.toggle("checked",it.sel);updatePhraseInfo();};
+      row.querySelector(".ph-del").onclick=()=>{arr.splice(ii,1);savePhraseLibs();renderSections();toast("已删除");};
+      itemsBox.appendChild(row);
+    });
+  });
+  $("#phraseCountInfo").textContent="共 "+total+" 条短语";
+  updatePhraseInfo();
+}
+async function translateAdd(si,btn){
+  const card=btn.closest(".ph-sec"),ta=card.querySelector("textarea");
+  const text=ta.value.trim();
+  if(!text){toast("请先输入英文短语");return;}
+  const data=getPhData(),arr=data[PHRASE_SECTIONS[si]];
+  const lines=text.split("\n").map(s=>s.trim()).filter(Boolean);
+  const fresh=lines.filter(l=>!arr.some(it=>it.en.toLowerCase()===l.toLowerCase()));
+  if(!fresh.length){toast("这些短语已存在");return;}
+  btn.disabled=true;const old=btn.textContent;btn.textContent="翻译中...";
+  let ok=0,fail=0;
+  for(const line of fresh){
+    let cn="";
+    try{
+      const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(line)+"&langpair=en|zh-CN");
+      const j=await r.json();
+      const t=(j&&j.responseData&&j.responseData.translatedText)||"";
+      if(t&&!/MYMEMORY WARNING|QUERY LENGTH|INVALID/i.test(t))cn=t;else fail++;
+    }catch(e){fail++;}
+    arr.push({en:line,cn:cn||"（未获取到翻译）",sel:true});if(cn)ok++;
+  }
+  btn.disabled=false;btn.textContent=old;
+  data[PHRASE_SECTIONS[si]+"_input"]="";
+  savePhraseLibs();renderSections();
+  toast(fail?ok+" 条已添加，"+fail+" 条翻译失败":"已添加 "+ok+" 条并自动勾选");
+}
+$("#savePhraseBtn").onclick=()=>{
+  const data=getPhData();let added=0;
+  $$(".ph-input-row textarea").forEach((ta,i)=>{
+    const text=ta.value.trim();if(!text)return;
+    const arr=data[PHRASE_SECTIONS[i]];
+    text.split("\n").map(s=>s.trim()).filter(Boolean).forEach(line=>{
+      if(!arr.some(it=>it.en.toLowerCase()===line.toLowerCase())){arr.push({en:line,cn:"（未翻译）",sel:true});added++;}
+    });
+    data[PHRASE_SECTIONS[i]+"_input"]="";
+  });
+  savePhraseLibs();renderSections();
+  toast(added?("已保存 "+added+" 条 ✓"):"没有新内容需要保存");
+};
+$("#delPhraseLibBtn").onclick=()=>{
+  if(!confirm("确定删除 "+LIBS[currentPhraseLib].short+" "+currentPhraseUnit+" 的全部短语题库吗？"))return;
+  delete phraseLibs[phKey()];savePhraseLibs();renderSections();toast("题库已删除");
+};
+function updatePhraseInfo(){
+  const data=getPhData();let sel=0;
+  PHRASE_SECTIONS.forEach(s=>(data[s]||[]).forEach(it=>{if(it.sel)sel++;}));
+  $("#phraseSelInfo").textContent="已选 "+sel+" 条";
+  $("#startPhraseBtn").disabled=sel===0;
+}
+$("#startPhraseBtn").onclick=()=>{
+  const data=getPhData(),items=[],secs=[];
+  PHRASE_SECTIONS.forEach(s=>{
+    (data[s]||[]).forEach(it=>{if(it.sel)items.push({en:it.en,cn:it.cn});});
+    if((data[s]||[]).some(it=>it.sel))secs.push(s);
+  });
+  if(!items.length)return;
+  quiz={type:"phrase",items:shuffle(items),idx:0,scope:LIBS[currentPhraseLib].short+" · "+currentPhraseUnit.replace("U","Unit ")+" "+secs.join("+"),units:[currentPhraseUnit]};
+  startQuiz();
+};
+
+/* ================= 默写流程 ================= */
+function startQuiz(){$("#quizTypeBadge").textContent=quiz.type==="word"?"单词默写":"短语默写";pages("pageQuiz");renderQuiz();}
+function renderQuiz(){
+  const it=quiz.items[quiz.idx];
+  $("#quizProg").textContent=(quiz.idx+1)+" / "+quiz.items.length;
+  $("#progFill").style.width=((quiz.idx+1)/quiz.items.length*100)+"%";
+  const q=$("#qText");
+  q.textContent=it.cn;
+  q.classList.toggle("small",it.cn.length>18);
+  $("#qAns").textContent=it.en;
+  $("#qAns").classList.remove("show");
+}
+function prevQ(){if(quiz.idx>0){quiz.idx--;renderQuiz();}else toast("已经是第一个了");}
+function nextQ(){if(quiz.idx<quiz.items.length-1){quiz.idx++;renderQuiz();}else finishQuiz();}
+/* 左半屏=上一题 右半屏=下一题 点卡片=答案 */
+$("#quizBody").onclick=(e)=>{
+  if(e.target.closest("#quizCard")){$("#qAns").classList.toggle("show");return;}
+  (e.clientX<window.innerWidth/2)?prevQ():nextQ();
+};
+$("#quizExit").onclick=()=>{const t=quiz.type;quiz=null;toast("已退出本次默写（未保存）");pages(quizPageOf(t));};
+function finishQuiz(){
+  const recs=store.get("writeRecords_v3",[]);
+  recs.unshift({id:Date.now(),ts:Date.now(),time:fmtTime(Date.now()),type:quiz.type,scope:quiz.scope,lib:quiz.type==="word"?currentWordLib:currentPhraseLib,units:quiz.units,count:quiz.items.length,items:quiz.items.map(it=>({en:it.en,cn:it.cn}))});
+  store.set("writeRecords_v3",recs);
+  $("#resultSub").textContent=quiz.scope+" · 共 "+quiz.items.length+" 个 · 已自动存入默写记录";
+  const list=$("#resultList");list.innerHTML="";
+  quiz.items.forEach((it,i)=>{list.insertAdjacentHTML("beforeend",'<span class="result-chip"><span class="no">'+(i+1)+'</span>'+esc(it.en)+'</span>');});
+  pages("pageResult");
+}
+/* 结果页返回=回对应准备页 */
+$("#resultBackBtn").onclick=()=>{const t=quiz.type;quiz=null;pages(quizPageOf(t));};
+$("#resultViewRecord").onclick=()=>{recFrom=quizPageOf(quiz.type);recTypeFilter="all";recUnitFilter="all";renderRecordFilters();renderRecords();pages("pageRecord");};
+
+/* ================= 默写记录 ================= */
+function allRecords(){return store.get("writeRecords_v3",[]);}
+function renderRecordFilters(){
+  $$(".chip[data-tf]").forEach(c=>{
+    c.classList.toggle("active",c.dataset.tf===recTypeFilter);
+    c.onclick=()=>{recTypeFilter=c.dataset.tf;renderRecordFilters();renderRecords();};
+  });
+  const set=new Set();
+  allRecords().forEach(r=>(r.units||[]).forEach(u=>set.add(u)));
+  const box=$("#unitFilterBox");box.innerHTML="";
+  const mk=(val,label)=>{
+    const b=document.createElement("button");
+    b.className="chip"+(recUnitFilter===val?" active":"");
+    b.textContent=label;
+    b.onclick=()=>{recUnitFilter=val;renderRecordFilters();renderRecords();};
+    box.appendChild(b);
+  };
+  mk("all","全部");
+  Array.from(set).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(u=>mk(u,u.replace("U","Unit ")));
+}
+function dateLabel(ts){
+  const d=new Date(ts),now=new Date(),p=n=>String(n).padStart(2,"0");
+  const ds=d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+  const ns=now.getFullYear()+"-"+p(now.getMonth()+1)+"-"+p(now.getDate());
+  if(ds===ns)return"今天";
+  const y=new Date(now.getTime()-86400000);
+  const ys=y.getFullYear()+"-"+p(y.getMonth()+1)+"-"+p(y.getDate());
+  if(ds===ys)return"昨天";
+  return(d.getMonth()+1)+"月"+d.getDate()+"日"+(d.getFullYear()!==now.getFullYear()?d.getFullYear()+"年":"");
+}
+function renderRecords(){
+  const box=$("#recordList");box.innerHTML="";
+  let recs=allRecords();
+  if(recTypeFilter!=="all")recs=recs.filter(r=>r.type===recTypeFilter);
+  if(recUnitFilter!=="all")recs=recs.filter(r=>(r.units||[]).includes(recUnitFilter));
+  if(!recs.length){box.innerHTML='<div class="empty-tip">暂无默写记录</div>';return;}
+  let last="";
+  recs.forEach(r=>{
+    const label=dateLabel(r.ts);
+    if(label!==last){box.insertAdjacentHTML("beforeend",'<div class="date-group">'+label+'</div>');last=label;}
+    const card=document.createElement("div");
+    card.className="rec glass-inner";
+    card.innerHTML='<div class="rec-head"><span class="rec-time">'+esc(r.time)+'</span><span class="badge '+(r.type==="word"?"word":"phrase")+'">'+(r.type==="word"?"单词":"短语")+'</span><span class="rec-scope">'+esc(r.scope)+'</span><span class="rec-cnt">'+r.count+'个</span><span class="tri">▶</span></div><div class="rec-body">'+r.items.map((it,i)=>'<div class="rec-item"><span class="no">'+(i+1)+'</span><span class="en">'+esc(it.en)+'</span><span class="cn">'+esc(it.cn)+'</span></div>').join("")+'</div>';
+    card.querySelector(".rec-head").onclick=function(){
+      const body=card.querySelector(".rec-body"),tri=card.querySelector(".tri");
+      const open=body.classList.toggle("open");
+      tri.classList.toggle("open",open);
+    };
+    box.appendChild(card);
+  });
+}
+$("#recBack").onclick=()=>pages(recFrom);
+$("#clearRecBtn").onclick=()=>{
+  if(!confirm("确定清空全部默写记录吗？此操作不可恢复。"))return;
+  store.set("writeRecords_v3",[]);renderRecords();toast("记录已清空");
+};
+
+/* ================= 启动 ================= */
+initGradeSelects();
+renderUnits();
+renderPhrase();
+</script>
+</body>
+</html>

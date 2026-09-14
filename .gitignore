@@ -1,0 +1,48 @@
+# ===== 构建产物 =====
+build/
+out/
+dist/
+*.apk
+*.aab
+*.dex
+*.jar
+*.class
+
+# ===== 签名密钥与口令（绝对不要提交）=====
+.secrets/
+*.keystore
+*.jks
+*.p12
+*.pem
+*.idsig
+keystore.properties
+local.properties
+
+# ===== 依赖 =====
+node_modules/
+.venv/
+venv/
+vendor/
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+.qoder/
+
+# ===== 日志 / 临时 =====
+*.log
+tmp/
+.cache/
+__pycache__/
+*.pyc
+
+# ===== 敏感信息 =====
+.env
+.env.*
+*_token*
+*_secret*
+credentials.json

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.yuwen.moxie"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <!-- 在线发音需要联网 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 翻页轻震反馈 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28" />
+
+    <supports-screens
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true" />
+
+    <application
+        android:label="语文默写"
+        android:icon="@mipmap/ic_launcher"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
+        android:hardwareAccelerated="true"
+        android:allowBackup="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|navigation"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
